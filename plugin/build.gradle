@@ -6,7 +6,10 @@ dependencies {
 
     implementation gradleApi()
     implementation localGroovy()
-    implementation 'com.android.tools.build:gradle:3.1.3'
+    implementation 'com.android.tools.build:gradle:3.4.1'
+
+    implementation  'org.ow2.asm:asm:7.1'
+    implementation 'org.ow2.asm:asm-commons:7.1'
 }
 
 repositories {
@@ -24,6 +27,6 @@ uploadArchives{
         pom.artifactId = 'autotrack.android'
 
         //插件版本号
-        pom.version = '1.0.2'
+        pom.version = '1.0.6'
     }
 }

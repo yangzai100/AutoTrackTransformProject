@@ -11,6 +11,10 @@ import com.android.build.api.transform.TransformInput
 import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.internal.pipeline.TransformManager
 import com.android.utils.FileUtils
+import groovy.io.FileType
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.ClassWriter
 import org.apache.commons.codec.digest.DigestUtils
 import org.gradle.api.Project
 
@@ -82,6 +86,32 @@ class SensorsAnalyticsTransform extends Transform{
         inputs.each {TransformInput input ->
             //遍历目录
             input.directoryInputs.each { DirectoryInput directoryInput ->
+
+               File dir =  directoryInput.file;
+                if (dir){
+                    dir.traverse(type: FileType.FILES,nameFilter: ~/.*\.class/) {
+                        System.out.println("find Class :"+it.name)
+                        //对class文件进行读取于解析
+                        ClassReader classReader = new ClassReader(it.bytes)
+                        //对class文件对写入
+                        ClassWriter writer = new ClassWriter(classReader,ClassWriter.COMPUTE_MAXS)
+                        //访问class字节码相应内容，访问到某一结构，便通知到ClassVisitor相应方法
+                        ClassVisitor classVisitor = new LifecycleClassvisitor(writer)
+                        //依次调用classvisitor的各个接口
+                        classReader.accept(classVisitor,ClassReader.EXPAND_FRAMES)
+                        //toByteArray方法会将最终修改的字节码以byte数组的形式返回
+                        byte [] bytes = writer.toByteArray()
+
+                        //通过文件流写入方式覆盖原先的内容，实现class文件的改写
+                        FileOutputStream outputStream = new FileOutputStream(it.path)
+                        outputStream.write(bytes)
+                        outputStream.close()
+                        System.out.println("find Class finish")
+
+                    }
+                }
+
+
                 //获取output目录
                 def dest = outputProvider.getContentLocation(directoryInput.name,directoryInput.contentTypes,directoryInput.scopes,
                         Format.DIRECTORY)
